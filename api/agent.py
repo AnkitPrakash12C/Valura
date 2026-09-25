@@ -15,7 +15,7 @@ def run_agent(task: str):
     llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", api_key=api_key, temperature=0.2)
 
     # Initialize the free web search tool
-    search_tool = DuckDuckGoSearchResults()
+    search_tool = DuckDuckGoSearchResults(max_results=3)
     tools = [search_tool]
 
     # Define the agent's system prompt to enforce contest requirements (planning & execution)
