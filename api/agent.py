@@ -30,10 +30,7 @@ def run_agent(task: str):
 
     # Orchestrate the ReAct workflow via LangGraph
     # agent_executor = create_react_agent(llm, tools, state_modifier=system_prompt)
-    # agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
-
-    # Cap iterations to prevent endless loops on tool failures
-    agent_executor = create_react_agent(llm, tools, prompt=system_prompt, max_iterations=3)
+    agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
     # Execute the agent
     try:
         response = agent_executor.invoke({"messages": [HumanMessage(content=task)]})
