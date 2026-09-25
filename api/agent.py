@@ -82,7 +82,7 @@ def run_agent(task: str):
     Always rely on the search tool for factual data. Do not guess."""
 
     # Cap iterations to 3 to prevent Vercel 60-second timeouts
-    agent_executor = create_react_agent(llm, tools, prompt=system_prompt, max_iterations=3)
+    agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
 
     # Execute the agent
     try:
