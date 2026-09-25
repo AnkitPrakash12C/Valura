@@ -4,6 +4,11 @@ from langchain_community.tools import DuckDuckGoSearchResults
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage
 
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
+from langchain_community.tools import DuckDuckGoSearchResults
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage
 
 def run_agent(task: str):
     # Initialize Gemini (Ensure GEMINI_API_KEY is set in Vercel environment variables)
@@ -14,10 +19,15 @@ def run_agent(task: str):
     # Use the free-tier Gemini 2.5 Flash model
     llm = ChatGoogleGenerativeAI(model="gemini-3.8-flash", api_key=api_key, temperature=0.2)
 
-    # Initialize the free web search tool
-    search_tool = DuckDuckGoSearchResults(max_results=3)
-    tools = [search_tool]
+    # # Initialize the free web search tool
+    # search_tool = DuckDuckGoSearchResults(max_results=3)
+    # tools = [search_tool]
+    # 1. Initialize the wrapper to use the stable HTML backend and limit results
+    wrapper = DuckDuckGoSearchAPIWrapper(backend="html", max_results=3)
 
+    # 2. Pass the configured wrapper into the search tool
+    search_tool = DuckDuckGoSearchResults(api_wrapper=wrapper)
+    tools = [search_tool]
     # Define the agent's system prompt to enforce contest requirements (planning & execution)
     system_prompt = """You are an Autonomous Research Agent. 
     When given a research task, follow this workflow:
