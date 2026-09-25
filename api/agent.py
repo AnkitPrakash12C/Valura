@@ -12,7 +12,7 @@ def run_agent(task: str):
         return "Error: GEMINI_API_KEY environment variable is missing."
 
     # Use the free-tier Gemini 2.5 Flash model
-    llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", api_key=api_key, temperature=0.2)
+    llm = ChatGoogleGenerativeAI(model="gemini-3.8-flash", api_key=api_key, temperature=0.2)
 
     # Initialize the free web search tool
     search_tool = DuckDuckGoSearchResults(max_results=3)
@@ -30,7 +30,10 @@ def run_agent(task: str):
 
     # Orchestrate the ReAct workflow via LangGraph
     # agent_executor = create_react_agent(llm, tools, state_modifier=system_prompt)
-    agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
+    # agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
+
+    # Cap iterations to prevent endless loops on tool failures
+    agent_executor = create_react_agent(llm, tools, prompt=system_prompt, max_iterations=3)
     # Execute the agent
     try:
         response = agent_executor.invoke({"messages": [HumanMessage(content=task)]})
