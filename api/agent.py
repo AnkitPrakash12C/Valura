@@ -29,8 +29,8 @@ def run_agent(task: str):
     Always rely on the search tool for factual data. Do not guess."""
 
     # Orchestrate the ReAct workflow via LangGraph
-    agent_executor = create_react_agent(llm, tools, state_modifier=system_prompt)
-
+    # agent_executor = create_react_agent(llm, tools, state_modifier=system_prompt)
+    agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
     # Execute the agent
     try:
         response = agent_executor.invoke({"messages": [HumanMessage(content=task)]})
