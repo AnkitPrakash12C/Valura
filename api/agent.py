@@ -64,7 +64,7 @@ def run_agent(task: str):
         return "Error: GEMINI_API_KEY environment variable is missing."
 
     # Use the faster/stable model
-    llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite", api_key=api_key, temperature=0.2)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=api_key, temperature=0.2)
 
     # Initialize the free Wikipedia tool (bypasses Vercel IP blocking)
     api_wrapper = WikipediaAPIWrapper(top_k_results=2, doc_content_chars_max=1000)
