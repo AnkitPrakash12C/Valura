@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Research Agent</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; background-color: #f9f9f9;}
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        textarea { width: 100%; height: 100px; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        button { background: #0070f3; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+        button:hover { background: #005bb5; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #output { margin-top: 2rem; white-space: pre-wrap; background: #f4f4f4; padding: 1rem; border-radius: 4px; border: 1px solid #ddd; display: none; }
+        .loading { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Autonomous Research Agent</h1>
+        <p>Give the agent a topic. It will autonomously plan sub-queries, search the web, and compile a report.</p>
+
+        <textarea id="taskInput" placeholder="e.g., Research the current state of Solid State Batteries in EV cars..."></textarea>
+        <button id="runBtn" onclick="runAgent()">Start Research Workflow</button>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        async function runAgent() {
+            const task = document.getElementById('taskInput').value;
+            const btn = document.getElementById('runBtn');
+            const output = document.getElementById('output');
+
+            if (!task.trim()) return;
+
+            btn.disabled = true;
+            btn.innerText = "Agent is planning and searching...";
+            output.style.display = "block";
+            output.innerHTML = "<span class='loading'>Initializing agentic workflow... This may take 15-30 seconds as the LLM calls external tools.</span>";
+
+            try {
+                const response = await fetch('/api/research', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task })
+                });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    output.innerHTML = data.output;
+                } else {
+                    output.innerHTML = `<span style="color:red">Error: ${data.message}</span>`;
+                }
+            } catch (error) {
+                output.innerHTML = `<span style="color:red">Network Error: ${error.message}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Start Research Workflow";
+            }
+        }
+    </script>
+</body>
+</html>
