@@ -12,7 +12,7 @@ def run_agent(task: str):
         return "Error: GEMINI_API_KEY environment variable is missing."
 
     # Use the free-tier Gemini 2.5 Flash model
-    llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", api_key=api_key, temperature=0.2)
+    llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", api_key=api_key, temperature=0.2)
 
     # Initialize the free web search tool
     search_tool = DuckDuckGoSearchResults(max_results=3)
