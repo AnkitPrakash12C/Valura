@@ -5,6 +5,7 @@
     }
   },
   "rewrites": [
-    { "source": "/", "destination": "/public/index.html" }
+    { "source": "/", "destination": "/public/index.html" },
+    { "source": "/style.css", "destination": "/public/style.css" }
   ]
 }

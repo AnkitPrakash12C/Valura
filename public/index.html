@@ -3,62 +3,416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autonomous Research Agent</title>
-    <style>
-        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; background-color: #f9f9f9;}
-        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #333; }
-        textarea { width: 100%; height: 100px; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
-        button { background: #0070f3; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-        button:hover { background: #005bb5; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        #output { margin-top: 2rem; white-space: pre-wrap; background: #f4f4f4; padding: 1rem; border-radius: 4px; border: 1px solid #ddd; display: none; }
-        .loading { color: #666; font-style: italic; }
-    </style>
+    <title>Valura — Autonomous LeetCode Code Helper Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🔍 Autonomous Research Agent</h1>
-        <p>Give the agent a topic. It will autonomously plan sub-queries, search the web, and compile a report.</p>
+        <div class="header">
+            <div class="brand-pill">⚡ LangGraph + Gemini ReAct Workflow</div>
+            <h1>Autonomous LeetCode Code Helper Agent</h1>
+            <p>Retrieves problem specifications & sample test cases, plans optimal algorithms, evaluates Expected vs. Actual outputs across all sample cases, and automatically pinpoints bugs in modified code.</p>
+        </div>
 
-        <textarea id="taskInput" placeholder="e.g., Research the current state of Solid State Batteries in EV cars..."></textarea>
-        <button id="runBtn" onclick="runAgent()">Start Research Workflow</button>
+        <!-- Visual Agentic Workflow Stepper -->
+        <div class="stepper">
+            <div id="step1" class="step-item">
+                <div class="step-num">1</div>
+                <div class="step-text">Retrieve Problem<span class="step-sub">Specs & sample cases</span></div>
+            </div>
+            <div id="step2" class="step-item">
+                <div class="step-num">2</div>
+                <div class="step-text">Plan & Reason<span class="step-sub">Optimal Time/Space</span></div>
+            </div>
+            <div id="step3" class="step-item">
+                <div class="step-num">3</div>
+                <div class="step-text">Code & Verify<span class="step-sub">Self-test loop</span></div>
+            </div>
+            <div id="step4" class="step-item">
+                <div class="step-num">4</div>
+                <div class="step-text">Interactive Judge<span class="step-sub">Mistake detector</span></div>
+            </div>
+        </div>
 
-        <div id="output"></div>
+        <div class="control-panel">
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="problemInput">LeetCode Question Number & Name</label>
+                    <input type="text" id="problemInput" placeholder="e.g., 1. Two Sum" value="1. Two Sum" />
+                </div>
+                <div class="lang-group">
+                    <label for="languageSelect">Target Language</label>
+                    <select id="languageSelect">
+                        <option value="Python">Python</option>
+                        <option value="C++">C++</option>
+                        <option value="Java">Java</option>
+                        <option value="JavaScript">JavaScript</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="chips">
+                <span class="chip-label">Quick Presets:</span>
+                <button class="chip" onclick="setProblem('1. Two Sum')">1. Two Sum</button>
+                <button class="chip" onclick="setProblem('9. Palindrome Number')">9. Palindrome Number</button>
+                <button class="chip" onclick="setProblem('20. Valid Parentheses')">20. Valid Parentheses</button>
+                <button class="chip" onclick="setProblem('53. Maximum Subarray')">53. Maximum Subarray</button>
+                <button class="chip" onclick="setProblem('121. Best Time to Buy and Sell Stock')">121. Best Time to Buy and Sell Stock</button>
+            </div>
+
+            <button id="solveBtn" class="btn-primary" onclick="runAgentWorkflow()">
+                🚀 Launch Autonomous Agent Workflow
+            </button>
+        </div>
+
+        <div id="statusBanner"></div>
+
+        <div id="resultsContainer" class="sections-grid">
+            <!-- Problem Statement & Planned Approach -->
+            <div class="two-col">
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2 id="probTitle">📋 Problem Statement</h2>
+                        <span id="probDifficulty" class="badge">Difficulty</span>
+                    </div>
+                    <div id="probDesc" class="content-box"></div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2>🧠 Planned Approach & Complexity</h2>
+                        <span class="badge">Reasoning Step</span>
+                    </div>
+                    <div id="approachBox" class="content-box"></div>
+                </div>
+            </div>
+
+            <!-- Section 3: Solution Code -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>💻 Generated LeetCode Solution</h2>
+                    <span id="langBadge" class="badge">Python</span>
+                </div>
+                <div class="code-window">
+                    <div class="window-bar">
+                        <div class="window-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <button class="btn-copy" onclick="copySolutionCode(this)">📋 Copy Solution</button>
+                    </div>
+                    <pre><code id="solutionCodeBox" class="hljs"></code></pre>
+                </div>
+            </div>
+
+            <!-- Section 4: Explanation -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>📖 Code Walkthrough & Agent Verification</h2>
+                    <span class="badge badge-easy">✓ Verified on Sample Cases</span>
+                </div>
+                <div id="explanationBox" class="content-box"></div>
+            </div>
+
+            <!-- Section 5: Interactive IDE, All Sample Test Cases & Automatic Mistake Detector -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>🛠️ Interactive App IDE & Sample Test Case Judge</h2>
+                    <span class="badge">Auto Mistake Detector Enabled</span>
+                </div>
+                <p style="color: var(--text-muted); margin-top: 0; font-size: 0.9rem;">
+                    All sample test cases for this problem are evaluated below. If you modify the code in the editor and introduce an error or wrong logic, clicking <strong>▶ Run & Test All Sample Cases</strong> will automatically pinpoint the mistake in your code and explain why it is wrong.
+                </p>
+                <div class="code-window">
+                    <div class="window-bar">
+                        <div class="window-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">interactive_solution_runner</span>
+                    </div>
+                    <textarea id="ideEditor" class="ide-editor" spellcheck="false"></textarea>
+                </div>
+
+                <div class="ide-controls">
+                    <button id="runIdeBtn" class="btn-run" onclick="runIdeCode()">▶ Run & Test All Sample Cases</button>
+                    <span style="color: var(--text-muted); font-size: 0.82rem;">Evaluates all sample test cases & checks for code mistakes</span>
+                </div>
+
+                <!-- All Sample Test Cases Judge Panel -->
+                <div id="judgePanel" class="judge-panel">
+                    <div class="verdict-header">
+                        <div id="verdictTitle" class="verdict-title">Ready to Run</div>
+                        <span id="verdictSummary" class="badge">Sample Test Cases</span>
+                    </div>
+                    <div id="allCasesContainer" class="all-cases-list"></div>
+                </div>
+
+                <!-- Automatic Mistake Diagnosis Panel -->
+                <div id="aiDebugCard" class="ai-debug-card">
+                    <div class="ai-debug-header">
+                        <span>🚨 Mistake Detected in Your Modified Code</span>
+                        <button class="btn-apply-fix" onclick="applyFixedCode()">⚡ Restore / Apply Corrected Code</button>
+                    </div>
+                    <label>Faulty Line / Mistake in Code:</label>
+                    <div id="debugMistakeLine" class="mistake-code-box"></div>
+
+                    <label>Why It Is Wrong:</label>
+                    <div id="debugWhatWrong" class="content-box" style="margin-bottom: 1rem;"></div>
+
+                    <label>Suggested Replacement:</label>
+                    <div id="debugHowToFix" class="fix-code-box"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        async function runAgent() {
-            const task = document.getElementById('taskInput').value;
-            const btn = document.getElementById('runBtn');
-            const output = document.getElementById('output');
+        let rawSolutionCode = "";
+        let referenceRunnableCode = "";
+        let currentSampleCases = [];
+        let latestFixedCode = "";
 
-            if (!task.trim()) return;
+        function setProblem(text) {
+            document.getElementById('problemInput').value = text;
+        }
+
+        function formatRichText(text) {
+            if (!text) return "";
+            let safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            safe = safe.replace(/\$([^$]+)\$/g, '<span class="math-pill">$1</span>');
+            safe = safe.replace(/`([^`]+)`/g, '<span class="inline-code">$1</span>');
+            safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#f8fafc;">$1</strong>');
+            return safe;
+        }
+
+        function setDifficultyBadge(diffText) {
+            const badge = document.getElementById('probDifficulty');
+            const d = (diffText || "Medium").trim();
+            badge.innerText = d;
+            badge.className = "badge";
+            if (d.toLowerCase().includes("easy")) badge.classList.add("badge-easy");
+            else if (d.toLowerCase().includes("hard")) badge.classList.add("badge-hard");
+            else badge.classList.add("badge-medium");
+        }
+
+        function setStepState(activeStep) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`step${i}`);
+                el.classList.remove("active", "done");
+                if (i < activeStep) el.classList.add("done");
+                else if (i === activeStep) el.classList.add("active");
+            }
+        }
+
+        function copySolutionCode(btn) {
+            navigator.clipboard.writeText(rawSolutionCode);
+            const orig = btn.innerText;
+            btn.innerText = "✓ Copied!";
+            setTimeout(() => btn.innerText = orig, 1800);
+        }
+
+        function renderJudgeResults(testRes, mistakeAnalysis = null) {
+            const verdictTitle = document.getElementById('verdictTitle');
+            const verdictSummary = document.getElementById('verdictSummary');
+            const allCasesContainer = document.getElementById('allCasesContainer');
+            const debugCard = document.getElementById('aiDebugCard');
+
+            allCasesContainer.innerHTML = "";
+            debugCard.style.display = "none";
+
+            if (!testRes) return;
+
+            // 1. Handle syntax / compilation / runtime errors
+            if (testRes.has_error) {
+                verdictTitle.className = "verdict-title verdict-fail";
+                verdictTitle.innerText = "❌ Compilation / Runtime Error";
+                verdictSummary.className = "badge badge-hard";
+                verdictSummary.innerText = "Execution Failed";
+                allCasesContainer.innerHTML = `
+                    <div class="sample-case-card case-failed">
+                        <div class="sample-case-header">
+                            <span class="sample-case-title">Compiler / Runtime Traceback</span>
+                            <span class="badge badge-hard">✗ ERROR</span>
+                        </div>
+                        <div class="io-group">
+                            <div class="io-value" style="color:#f87171;">${testRes.raw_output || "Unknown execution error"}</div>
+                        </div>
+                    </div>`;
+            } else {
+                const cases = testRes.cases || [];
+                const passedCount = cases.filter(c => c.passed).length;
+                const allPassed = cases.length > 0 && passedCount === cases.length;
+
+                if (allPassed) {
+                    verdictTitle.className = "verdict-title verdict-pass";
+                    verdictTitle.innerText = "✅ Accepted — All Sample Test Cases Passed";
+                    verdictSummary.className = "badge badge-easy";
+                    verdictSummary.innerText = `${passedCount} / ${cases.length} Passed`;
+                } else {
+                    verdictTitle.className = "verdict-title verdict-fail";
+                    verdictTitle.innerText = "❌ Wrong Answer on Sample Test Cases";
+                    verdictSummary.className = "badge badge-hard";
+                    verdictSummary.innerText = `${passedCount} / ${cases.length} Passed`;
+                }
+
+                // Render EVERY sample test case card with PASSED or FAILED badge
+                cases.forEach((c) => {
+                    const statusBadge = c.passed
+                        ? '<span class="badge badge-easy">✓ PASSED</span>'
+                        : '<span class="badge badge-hard">✗ FAILED</span>';
+
+                    const card = document.createElement("div");
+                    card.className = `sample-case-card ${c.passed ? "case-passed" : "case-failed"}`;
+                    card.innerHTML = `
+                        <div class="sample-case-header">
+                            <span class="sample-case-title">Sample Test Case #${c.id}</span>
+                            ${statusBadge}
+                        </div>
+                        <div class="io-grid-3">
+                            <div class="io-group">
+                                <div class="io-label">Input</div>
+                                <div class="io-value">${c.input}</div>
+                            </div>
+                            <div class="io-group">
+                                <div class="io-label">Expected Output</div>
+                                <div class="io-value" style="color:#34d399;">${c.expected}</div>
+                            </div>
+                            <div class="io-group">
+                                <div class="io-label">Actual Output</div>
+                                <div class="io-value" style="color:${c.passed ? '#34d399' : '#f87171'};">${c.actual}</div>
+                            </div>
+                        </div>
+                    `;
+                    allCasesContainer.appendChild(card);
+                });
+            }
+
+            // 2. If mistakeAnalysis was returned (because edited code failed), show it automatically
+            if (mistakeAnalysis && !mistakeAnalysis.error) {
+                document.getElementById('debugMistakeLine').innerText = mistakeAnalysis.mistake_line || "Modified logic error";
+                document.getElementById('debugWhatWrong').innerHTML = formatRichText(mistakeAnalysis.what_went_wrong || "");
+                document.getElementById('debugHowToFix').innerText = mistakeAnalysis.how_to_fix || "";
+                latestFixedCode = mistakeAnalysis.fixed_code || referenceRunnableCode;
+                debugCard.style.display = "block";
+            }
+        }
+
+        async function runAgentWorkflow() {
+            const task = document.getElementById('problemInput').value.trim();
+            const language = document.getElementById('languageSelect').value;
+            const btn = document.getElementById('solveBtn');
+            const banner = document.getElementById('statusBanner');
+            const results = document.getElementById('resultsContainer');
+
+            if (!task) return;
 
             btn.disabled = true;
-            btn.innerText = "Agent is planning and searching...";
-            output.style.display = "block";
-            output.innerHTML = "<span class='loading'>Initializing agentic workflow... This may take 15-30 seconds as the LLM calls external tools.</span>";
+            btn.innerText = "⏳ Retrieving Problem, Planning, Coding & Judging Sample Cases...";
+            banner.style.display = "block";
+            banner.innerText = `🔍 Retrieving "${task}" & sample test cases → 🧠 Planning Optimal Approach → 💻 Verifying ${language} Solution...`;
+            results.style.display = "none";
+
+            setStepState(1);
+            const t1 = setTimeout(() => setStepState(2), 2500);
+            const t2 = setTimeout(() => setStepState(3), 5500);
 
             try {
                 const response = await fetch('/api/research', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ task })
+                    body: JSON.stringify({ action: "solve", task, language })
                 });
-                const data = await response.json();
+                const res = await response.json();
+                clearTimeout(t1);
+                clearTimeout(t2);
 
-                if (data.status === "success") {
-                    output.innerHTML = data.output;
+                if (res.status === "success" && res.data) {
+                    setStepState(5);
+                    const d = res.data;
+
+                    document.getElementById('probTitle').innerText = `📋 ${d.problem_title || task}`;
+                    setDifficultyBadge(d.difficulty);
+                    document.getElementById('probDesc').innerHTML = formatRichText(d.problem_description || "");
+                    document.getElementById('approachBox').innerHTML = formatRichText(d.approach || "");
+                    document.getElementById('langBadge').innerText = language;
+
+                    rawSolutionCode = d.solution_code || "";
+                    referenceRunnableCode = d.runnable_code || d.solution_code || "";
+                    currentSampleCases = d.sample_test_cases || [];
+
+                    const codeEl = document.getElementById('solutionCodeBox');
+                    codeEl.textContent = rawSolutionCode;
+                    delete codeEl.dataset.highlighted;
+                    hljs.highlightElement(codeEl);
+
+                    document.getElementById('explanationBox').innerHTML = formatRichText(d.explanation || "");
+                    document.getElementById('ideEditor').value = referenceRunnableCode;
+
+                    renderJudgeResults(d.initial_test_results, null);
+
+                    banner.style.display = "none";
+                    results.style.display = "flex";
                 } else {
-                    output.innerHTML = `<span style="color:red">Error: ${data.message}</span>`;
+                    setStepState(0);
+                    banner.innerText = `Error: ${res.message || "Failed to generate output."}`;
                 }
-            } catch (error) {
-                output.innerHTML = `<span style="color:red">Network Error: ${error.message}</span>`;
+            } catch (err) {
+                clearTimeout(t1);
+                clearTimeout(t2);
+                setStepState(0);
+                banner.innerText = `Network Error: ${err.message}`;
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Start Research Workflow";
+                btn.innerText = "🚀 Launch Autonomous Agent Workflow";
             }
+        }
+
+        async function runIdeCode() {
+            const task = document.getElementById('problemInput').value.trim();
+            const code = document.getElementById('ideEditor').value;
+            const language = document.getElementById('languageSelect').value;
+            const runBtn = document.getElementById('runIdeBtn');
+
+            runBtn.disabled = true;
+            runBtn.innerText = "⏳ Running Sample Cases & Checking for Mistakes...";
+
+            try {
+                const response = await fetch('/api/research', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "run_code",
+                        task,
+                        language,
+                        code,
+                        reference_code: referenceRunnableCode,
+                        sample_cases: currentSampleCases
+                    })
+                });
+                const data = await response.json();
+                if (data.status === "success") {
+                    renderJudgeResults(data.test_results, data.mistake_analysis);
+                }
+            } catch (err) {
+                alert(`Network Error: ${err.message}`);
+            } finally {
+                runBtn.disabled = false;
+                runBtn.innerText = "▶ Run & Test All Sample Cases";
+            }
+        }
+
+        function applyFixedCode() {
+            if (!latestFixedCode) return;
+            document.getElementById('ideEditor').value = latestFixedCode;
+            runIdeCode();
         }
     </script>
 </body>
