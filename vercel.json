@@ -5,7 +5,8 @@
     }
   },
   "rewrites": [
-    { "source": "/", "destination": "/public/index.html" },
-    { "source": "/style.css", "destination": "/public/style.css" }
+    { "source": "/api/research", "destination": "/api/research.py" },
+    { "source": "/style.css", "destination": "/public/style.css" },
+    { "source": "/", "destination": "/public/index.html" }
   ]
 }

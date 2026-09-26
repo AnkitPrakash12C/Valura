@@ -362,7 +362,7 @@
                     results.style.display = "flex";
                 } else {
                     setStepState(0);
-                    banner.innerText = `Error: ${res.message || "Failed to generate output."}`;
+                    banner.innerText = `Error: ${res.message || JSON.stringify(res.detail) || "Failed to generate output."}`;
                 }
             } catch (err) {
                 clearTimeout(t1);
